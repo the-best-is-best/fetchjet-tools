@@ -1,0 +1,6 @@
+{
+    global:
+        mpv_*;
+    local:
+        *;
+};

@@ -1,0 +1,88 @@
+name: libmpv Linux
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: mpv version (its sha256 must be in libmpv/linux/fetch-sources.sh)
+        default: 0.42.0
+        required: true
+        type: string
+      publish:
+        description: Upload the gz to the release libmpv-<version>
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    env:
+      FJ_MPV_WORK: ${{ github.workspace }}/.fj-mpv-work
+      FJ_MPV_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends nasm gperf pkg-config cmake libpulse-dev libasound2-dev python3-venv
+          python3 -m venv "$FJ_MPV_WORK/venv"
+          "$FJ_MPV_WORK/venv/bin/pip" install --quiet meson==1.10.1 ninja==1.11.1.4 jinja2==3.1.6
+          "$FJ_MPV_WORK/venv/bin/meson" --version
+          gcc --version | head -1
+          ldd --version | head -1
+
+      - name: Cache sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FJ_MPV_WORK }}/dl
+          key: libmpv-linux-src-${{ inputs.version }}-${{ hashFiles('libmpv/linux/fetch-sources.sh', 'libmpv/linux/vulkan-headers.sha256') }}
+
+      - name: Cache dependency and FFmpeg builds
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FJ_MPV_WORK }}/out
+          key: libmpv-linux-deps-ubuntu-22.04-${{ hashFiles('libmpv/linux/env.sh', 'libmpv/linux/fetch-sources.sh', 'libmpv/linux/vulkan-headers.sha256', 'libmpv/linux/build-deps.sh', 'libmpv/linux/build-ffmpeg.sh') }}
+
+      - name: Build
+        run: bash libmpv/linux/build-all.sh
+
+      - name: Summary
+        id: result
+        run: |
+          gz="$FJ_MPV_WORK/dist/libmpv-linux-x64-$FJ_MPV_VERSION.gz"
+          so="$FJ_MPV_WORK/dist/libmpv.so.2"
+          echo "gz=$gz" >> "$GITHUB_OUTPUT"
+          {
+            echo "### libmpv-linux-x64-$FJ_MPV_VERSION.gz"
+            echo
+            echo "| File | Size (bytes) | sha256 |"
+            echo "|---|---|---|"
+            echo "| \`libmpv-linux-x64-$FJ_MPV_VERSION.gz\` | $(stat -c %s "$gz") | \`$(sha256sum "$gz" | cut -c1-64)\` |"
+            echo "| \`libmpv.so.2\` | $(stat -c %s "$so") | \`$(sha256sum "$so" | cut -c1-64)\` |"
+            echo
+            echo '```'
+            bash libmpv/linux/check.sh "$so"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: libmpv-linux-x64-${{ inputs.version }}
+          path: ${{ steps.result.outputs.gz }}
+
+      - name: Publish
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="libmpv-$FJ_MPV_VERSION"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --title "libmpv $FJ_MPV_VERSION" --latest=false \
+              --notes "Self-contained LGPL builds of libmpv $FJ_MPV_VERSION for the FetchJet media player."
+          fi
+          gh release upload "$tag" "${{ steps.result.outputs.gz }}" --clobber
