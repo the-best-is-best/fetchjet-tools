@@ -1,0 +1,50 @@
+name: PDFium
+
+on:
+  workflow_dispatch:
+    inputs:
+      chromium:
+        description: Chromium build of bblanchon/pdfium-binaries (its sha256s must be in pdfium/sources-<chromium>.sha256)
+        default: "8179"
+        required: true
+        type: string
+      build:
+        description: Build number of this PDFium version (release tag pdfium-<chromium>-<build>, never overwritten)
+        default: "1"
+        required: true
+        type: string
+      publish:
+        description: Upload the gz files to the release pdfium-<chromium>-<build>
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Package
+        run: bash pdfium/package.sh "${{ inputs.chromium }}" dist
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pdfium-${{ inputs.chromium }}
+          path: dist/
+
+      - name: Publish
+        if: ${{ inputs.publish }}
+        run: |
+          tag="pdfium-${{ inputs.chromium }}-${{ inputs.build }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --title "PDFium chromium/${{ inputs.chromium }} build ${{ inputs.build }}" --latest=false \
+              --notes "PDFium from bblanchon/pdfium-binaries chromium/${{ inputs.chromium }} (Apache 2.0 / BSD), repackaged for FetchJet's desktop PDF reader."
+          fi
+          gh release upload "$tag" dist/pdfium-*.gz dist/LICENSE.pdfium.txt
