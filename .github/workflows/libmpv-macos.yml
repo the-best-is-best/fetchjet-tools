@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 90
     env:
       FJ_MPV_WORK: ${{ github.workspace }}/work
