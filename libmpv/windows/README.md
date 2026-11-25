@@ -22,7 +22,7 @@ Video is decoded in software and handed to the app through mpv's software render
 - Video: H.264, HEVC, VP8, VP9, AV1 (dav1d), MPEG-4 Part 2, MPEG-1 / MPEG-2, and MJPEG / PNG / GIF / BMP / WebP (cover art).
 - Audio: AAC (and LATM), MP3, MP2, Opus, Vorbis, FLAC, ALAC, AC-3, E-AC-3, APE, WavPack, TTA, DTS, TrueHD, WMA v1 / v2, PCM (8 to 64 bit, A-law, mu-law).
 - Filters used by mpv for speed, volume and format changes: aresample, atempo, scale, format, volume, and a few more (see `build-ffmpeg.sh`).
-- Subtitles: no FFmpeg subtitle decoders are built in. libass is linked because mpv 0.42.0 requires it.
+- Subtitles: FFmpeg demuxers srt, ass, webvtt and decoders subrip, srt, ass, ssa, movtext, webvtt, text, dvdsub, pgssub, dvbsub (side files and tracks inside the video); libass draws them.
 - Only local files and pipes: FFmpeg's network protocols are left out (FetchJet plays files it has downloaded).
 
 ## Build on your PC

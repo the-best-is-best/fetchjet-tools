@@ -3,8 +3,8 @@
 set -euo pipefail
 . "$(dirname "$0")/env.sh"
 
-demuxers="mov,matroska,ogg,mp3,flac,wav,aac,mpegts,mpegps,ac3,eac3,aiff,ape,asf,avi,flv,wv,tta,caf,dts,w64,amr,pcm_s16le,pcm_s16be,pcm_f32le,pcm_u8,mpegvideo,h264,hevc,ivf,obu"
-decoders="h264,hevc,vp9,vp8,mpeg4,mpeg2video,mpeg1video,libdav1d,aac,aac_latm,mp3,mp3float,mp2,mp2float,opus,vorbis,flac,alac,ac3,eac3,ape,wavpack,tta,dca,truehd,wmav1,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32le,pcm_s32be,pcm_f32le,pcm_f32be,pcm_f64le,pcm_u8,pcm_alaw,pcm_mulaw,mjpeg,png,gif,bmp,webp"
+demuxers="mov,matroska,ogg,mp3,flac,wav,aac,mpegts,mpegps,ac3,eac3,aiff,ape,asf,avi,flv,wv,tta,caf,dts,w64,amr,pcm_s16le,pcm_s16be,pcm_f32le,pcm_u8,mpegvideo,h264,hevc,ivf,obu,srt,ass,webvtt"
+decoders="h264,hevc,vp9,vp8,mpeg4,mpeg2video,mpeg1video,libdav1d,aac,aac_latm,mp3,mp3float,mp2,mp2float,opus,vorbis,flac,alac,ac3,eac3,ape,wavpack,tta,dca,truehd,wmav1,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32le,pcm_s32be,pcm_f32le,pcm_f32be,pcm_f64le,pcm_u8,pcm_alaw,pcm_mulaw,mjpeg,png,gif,bmp,webp,subrip,srt,ass,ssa,movtext,webvtt,text,dvdsub,pgssub,dvbsub"
 parsers="aac,aac_latm,mpegaudio,opus,vorbis,flac,ac3,mjpeg,png,webp,h264,hevc,vp9,av1,vp8,mpeg4video,mpegvideo,dca,gif,bmp"
 bsfs="aac_adtstoasc,null,extract_extradata,h264_mp4toannexb,hevc_mp4toannexb,vp9_superframe,vp9_superframe_split,av1_frame_merge,av1_frame_split,av1_metadata,h264_metadata,hevc_metadata,mpeg4_unpack_bframes,noise,remove_extradata,dca_core"
 filters="aresample,anull,null,aformat,format,scale,atempo,volume,pan,hflip,vflip,transpose,rotate,setpts,asetpts,fps,aresample,anullsrc,loudnorm,dynaudnorm,equalizer,bass,treble,lowpass,highpass,afade,amix,astats,asetrate,aeval"
