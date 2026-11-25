@@ -1,0 +1,53 @@
+name: ffmpeg for Android - publish a build
+
+# Publishes the zip of an earlier "ffmpeg for Android" run (no new build). Run that workflow with
+# publish off, check the sizes in its log, then give its run id here.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Run id of the "ffmpeg for Android" build to publish
+        required: true
+        type: string
+      version:
+        description: FFmpeg version of that build
+        default: "7.1.1"
+        required: true
+        type: string
+      build:
+        description: Build number (release tag ffmpeg-android-<version>-<build>, never overwritten)
+        default: "1"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ffmpeg-android-${{ inputs.version }}
+          path: dist
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Publish
+        run: |
+          [ "$(gh run view "${{ inputs.run_id }}" --json workflowName --jq .workflowName)" = "ffmpeg for Android" ] || { echo "not an ffmpeg for Android run"; exit 1; }
+          (cd dist && sha256sum -c ffmpeg-android-*.zip.sha256)
+          tag="ffmpeg-android-${{ inputs.version }}-${{ inputs.build }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --title "ffmpeg for Android ${{ inputs.version }} build ${{ inputs.build }}" --latest=false \
+              --notes "FFmpeg ${{ inputs.version }} (LGPL 3) with LAME, Opus and Mbed TLS, built for FetchJet's Android app by run ${{ inputs.run_id }}. The app pins the sha256 of the zip."
+          fi
+          gh release upload "$tag" dist/ffmpeg-android-*.zip dist/ffmpeg-android-*.zip.sha256 dist/LICENSE.ffmpeg-android.txt
+          echo "tools-pins/ffmpeg-android.txt:"
+          echo "tag=$tag"
+          echo "sha256=$(cut -d' ' -f1 dist/ffmpeg-android-*.zip.sha256)"

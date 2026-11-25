@@ -14,7 +14,7 @@ on:
         required: true
         type: string
       publish:
-        description: Upload the zip to the release ffmpeg-android-<version>-<build>
+        description: Upload the zip to the release ffmpeg-android-<version>-<build> (or publish this run later with "ffmpeg for Android - publish a build")
         default: false
         type: boolean
 
