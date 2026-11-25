@@ -12,7 +12,7 @@ FetchJet does not need this repository to build. The app downloads the finished 
 
 ## Releases
 
-Release tag `libmpv-<version>`, one asset per platform: `libmpv-<os>-<arch>-<version>.gz` (a single gzip-compressed library, self-contained, LGPL build of mpv). After publishing a new version, put its sha256 in `PlayerLibraryPin` in FetchJet (`sharedLogic/src/nativeDesktopMain/kotlin/com/michelle/raouf/fetch_jet/feature/media_extractor/PlayerLibrary.nativeDesktop.kt`).
+Release tag `fetchjet-<FetchJet version>` (for example `fetchjet-2.1.0`), one asset per platform: `libmpv-<os>-<arch>-<mpv version>.gz` (a single gzip-compressed library, self-contained, LGPL build of mpv). Assets are never overwritten: every FetchJet version pins the release tag and the sha256 of its own files, so older apps keep downloading what they were built with. After publishing for a new FetchJet version, put the tag and the sha256s in `PlayerLibraryPin` in FetchJet (`sharedLogic/src/nativeDesktopMain/kotlin/com/michelle/raouf/fetch_jet/feature/media_extractor/PlayerLibrary.nativeDesktop.kt`).
 
 ## Licence
 

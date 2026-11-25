@@ -3,13 +3,17 @@ name: libmpv Linux
 on:
   workflow_dispatch:
     inputs:
+      app_version:
+        description: FetchJet version these builds are for (release tag fetchjet-<app_version>, never overwritten)
+        required: true
+        type: string
       version:
         description: mpv version (its sha256 must be in libmpv/linux/fetch-sources.sh)
         default: 0.42.0
         required: true
         type: string
       publish:
-        description: Upload the gz to the release libmpv-<version>
+        description: Upload the gz to the release fetchjet-<app_version>
         default: false
         type: boolean
 
@@ -92,9 +96,9 @@ jobs:
 
       - name: Publish
         run: |
-          tag="libmpv-$FJ_MPV_VERSION"
+          tag="fetchjet-${{ inputs.app_version }}"
           if ! gh release view "$tag" > /dev/null 2>&1; then
-            gh release create "$tag" --title "libmpv $FJ_MPV_VERSION" --latest=false \
+            gh release create "$tag" --title "libmpv $FJ_MPV_VERSION for FetchJet ${{ inputs.app_version }}" --latest=false \
               --notes "Self-contained LGPL builds of libmpv $FJ_MPV_VERSION for the FetchJet media player."
           fi
-          gh release upload "$tag" "libmpv-linux-x64-$FJ_MPV_VERSION.gz" --clobber
+          gh release upload "$tag" "libmpv-linux-x64-$FJ_MPV_VERSION.gz"
