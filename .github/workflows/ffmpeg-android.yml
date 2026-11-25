@@ -1,6 +1,9 @@
 name: ffmpeg for Android
 
 on:
+  push:
+    branches: [ffmpeg-android]
+    paths: [ffmpeg-android/**, .github/workflows/ffmpeg-android.yml]
   workflow_dispatch:
     inputs:
       version:
@@ -35,17 +38,17 @@ jobs:
 
       - name: Build
         run: |
-          grep -q "FFMPEG=${{ inputs.version }} " ffmpeg-android/build.sh || { echo "build.sh does not build ${{ inputs.version }}"; exit 1; }
+          grep -q "FFMPEG=${{ inputs.version || '7.1.1' }} " ffmpeg-android/build.sh || { echo "build.sh does not build ${{ inputs.version || '7.1.1' }}"; exit 1; }
           bash ffmpeg-android/build.sh dist
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ffmpeg-android-${{ inputs.version }}
+          name: ffmpeg-android-${{ inputs.version || '7.1.1' }}
           path: dist/
 
   publish:
     needs: build
-    if: ${{ inputs.publish }}
+    if: ${{ inputs.publish == true }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -55,15 +58,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: ffmpeg-android-${{ inputs.version }}
+          name: ffmpeg-android-${{ inputs.version || '7.1.1' }}
           path: dist
 
       - name: Publish
         run: |
-          tag="ffmpeg-android-${{ inputs.version }}-${{ inputs.build }}"
+          tag="ffmpeg-android-${{ inputs.version || '7.1.1' }}-${{ inputs.build }}"
           if ! gh release view "$tag" > /dev/null 2>&1; then
-            gh release create "$tag" --title "ffmpeg for Android ${{ inputs.version }} build ${{ inputs.build }}" --latest=false \
-              --notes "FFmpeg ${{ inputs.version }} (LGPL 3) with LAME, Opus and Mbed TLS, built for FetchJet's Android app. The app pins the sha256 of the zip."
+            gh release create "$tag" --title "ffmpeg for Android ${{ inputs.version || '7.1.1' }} build ${{ inputs.build }}" --latest=false \
+              --notes "FFmpeg ${{ inputs.version || '7.1.1' }} (LGPL 3) with LAME, Opus and Mbed TLS, built for FetchJet's Android app. The app pins the sha256 of the zip."
           fi
           gh release upload "$tag" dist/ffmpeg-android-*.zip dist/ffmpeg-android-*.zip.sha256 dist/LICENSE.ffmpeg-android.txt
           echo "Put this in FetchJet tools-pins/ffmpeg-android.txt:"
