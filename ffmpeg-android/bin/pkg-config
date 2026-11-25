@@ -23,6 +23,7 @@ case "$pkg" in
       cflags) echo "-I$P/include/opus";;
       ver) echo "1.5.2";;
     esac;;
+  "") echo "0.29.2";;
   *) exit 1;;
 esac
 exit 0
