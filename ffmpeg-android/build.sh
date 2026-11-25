@@ -50,24 +50,22 @@ for ABI in $ABIS; do
      -DCMAKE_C_FLAGS="-ffunction-sections -fdata-sections" > "$W/mbedtls.log" 2>&1 \
    && cmake --build mbedtls-build -j"$JOBS" >> "$W/mbedtls.log" 2>&1 && cmake --install mbedtls-build >> "$W/mbedtls.log" 2>&1) || { tail -30 "$W/mbedtls.log"; exit 1; }
   tar xJf "$ROOT/src/ffmpeg-$FFMPEG.tar.xz"
-  mkdir ffb; cd ffb
   export FFPREFIX=$PREFIX
-  ../ffmpeg-$FFMPEG/configure --prefix="$ROOT/ffout/$ABI" --target-os=android --arch=$ARCH \
-    --enable-cross-compile --cc="$CC" --host-cc=${HOST_CC:-cc} --ar="$AR" --ranlib="$RANLIB" --strip="$STRIP" --nm="$TC/bin/llvm-nm" \
-    --disable-everything --disable-doc --disable-shared --enable-static --disable-autodetect --enable-zlib \
-    --disable-avdevice --enable-network --enable-version3 --enable-mbedtls --disable-debug --enable-small --enable-pic $EXTRA \
-    --enable-ffmpeg --enable-ffprobe --disable-ffplay --enable-libmp3lame --enable-libopus \
-    --pkg-config="$ROOT/bin/pkg-config" \
-    --extra-cflags="-I$PREFIX/include -Os -ffunction-sections -fdata-sections" \
-    --extra-ldexeflags="-pie -Wl,--export-dynamic-symbol=main" \
-    --extra-ldflags="-L$PREFIX/lib -Wl,--gc-sections -Wl,-z,max-page-size=16384" \
-    --enable-protocol=$PROT \
-    --enable-demuxer=$DEMUX --enable-muxer=$MUX --enable-decoder=$DEC --enable-encoder=$ENC \
-    --enable-parser=$PARS --enable-bsf=$BSF --enable-filter=$FILT > "$W/configure.log" 2>&1 || { tail -40 "$W/configure.log"; tail -60 ffbuild/config.log 2>/dev/null; exit 1; }
+  configure() {
+    ../ffmpeg-$FFMPEG/configure --prefix="$ROOT/ffout/$ABI" --target-os=android --arch=$ARCH       --enable-cross-compile --cc="$CC" --host-cc=${HOST_CC:-cc} --ar="$AR" --ranlib="$RANLIB" --strip="$STRIP" --nm="$TC/bin/llvm-nm"       --disable-everything --disable-doc --disable-shared --enable-static --disable-autodetect --enable-zlib       --disable-avdevice --disable-debug --enable-small --enable-pic $EXTRA       --disable-ffplay --enable-libmp3lame --enable-libopus       --pkg-config="$ROOT/bin/pkg-config"       --extra-cflags="-I$PREFIX/include -Os -ffunction-sections -fdata-sections"       --extra-ldexeflags="-pie -Wl,--export-dynamic-symbol=main"       --extra-ldflags="-L$PREFIX/lib -Wl,--gc-sections -Wl,-z,max-page-size=16384"       --enable-demuxer=$DEMUX --enable-muxer=$MUX --enable-decoder=$DEC --enable-encoder=$ENC       --enable-parser=$PARS --enable-bsf=$BSF --enable-filter=$FILT "$@" > "$W/configure-$(basename "$PWD").log" 2>&1       || { tail -40 "$W/configure-$(basename "$PWD").log"; tail -60 ffbuild/config.log 2>/dev/null; exit 1; }
+  }
+  # ffmpeg reads parts of videos from the site (yt-dlp's "only the clip"): network + TLS
+  mkdir ffb; cd ffb
+  configure --enable-ffmpeg --disable-ffprobe --enable-network --enable-version3 --enable-mbedtls --enable-protocol=$PROT
   grep -q '^CONFIG_HTTPS_PROTOCOL=yes' ffbuild/config.mak || { echo "https protocol not enabled"; exit 1; }
-  make -j"$JOBS" > "$W/make.log" 2>&1 || { tail -40 "$W/make.log"; exit 1; }
+  make -j"$JOBS" ffmpeg > "$W/make-ffmpeg.log" 2>&1 || { tail -40 "$W/make-ffmpeg.log"; exit 1; }
+  # ffprobe only reads local files: no network, so it stays small
+  cd ..; mkdir ffp; cd ffp
+  configure --disable-ffmpeg --enable-ffprobe --disable-network --enable-protocol=$LOCALPROT
+  make -j"$JOBS" ffprobe > "$W/make-ffprobe.log" 2>&1 || { tail -40 "$W/make-ffprobe.log"; exit 1; }
+  cd ..
   mkdir -p "$OUT/$ABI"
-  cp ffmpeg "$OUT/$ABI/libffmpeg.so"; cp ffprobe "$OUT/$ABI/libffprobe.so"
+  cp ffb/ffmpeg "$OUT/$ABI/libffmpeg.so"; cp ffp/ffprobe "$OUT/$ABI/libffprobe.so"
   "$STRIP" "$OUT/$ABI/libffmpeg.so" "$OUT/$ABI/libffprobe.so"
   ls -l "$OUT/$ABI"
 done

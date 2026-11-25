@@ -7,3 +7,4 @@ PARS="aac,aac_latm,mpegaudio,opus,vorbis,flac,ac3,mjpeg,png,webp,h264,hevc,vp9,a
 BSF="aac_adtstoasc,null,extract_extradata,h264_mp4toannexb,hevc_mp4toannexb,vp9_superframe,opus_metadata,mov2textsub,text2movsub,noise,setts,pcm_rechunk,remove_extradata,av1_frame_merge,av1_frame_split"
 FILT="aresample,anull,null,atrim,trim,asetpts,setpts,aformat,format,concat,amerge,amix,volume,loudnorm,atempo,apad,afade,areverse,areverse,scale,anullsrc,anullsink,nullsink,aselect,select,asplit,split,showinfo,ametadata,pan,channelmap,channelsplit,join,aeval,highpass,lowpass,dynaudnorm,silencedetect,silenceremove,astats,sidechaincompress"
 PROT="file,pipe,fd,cache,crypto,data,concat,subfile,hls,http,https,httpproxy,tcp,tls"
+LOCALPROT="file,pipe,fd,cache,data,concat,subfile"
