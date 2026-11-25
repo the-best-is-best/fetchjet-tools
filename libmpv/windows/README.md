@@ -46,7 +46,7 @@ Steps, each can run on its own:
 `.github/workflows/libmpv-windows.yml`, run by hand (Actions > libmpv Windows > Run workflow) with:
 
 - `version`: mpv version (default 0.42.0).
-- `app_version`: the FetchJet version the build is for; the release is `fetchjet-<app_version>`.
-- `publish`: when on, creates the release `fetchjet-<app_version>` if it does not exist (not marked as latest) and uploads the gz. A file that is already there is never replaced: each FetchJet version pins the sha of its own release, so older apps keep working. A new build for the same app version needs its old asset deleted first, on purpose.
+- `build`: the build number of this mpv version (1, 2, ...); the release is `libmpv-<version>-<build>`.
+- `publish`: when on, creates the release `libmpv-<version>-<build>` if it does not exist (not marked as latest) and uploads the gz. A file that is already there is never replaced: each FetchJet version pins the sha of its own release, so older apps keep working. A changed build gets the next build number.
 
 The job summary shows the gz's size and sha256, and the gz is also kept as a run artifact. The MSYS2 libraries are rolling, so two builds a few weeks apart differ by a few bytes: put the sha256 of the file that was actually published into FetchJet's `PlayerLibraryPin`.

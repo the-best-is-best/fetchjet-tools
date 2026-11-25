@@ -3,16 +3,17 @@ name: libmpv Windows
 on:
   workflow_dispatch:
     inputs:
-      app_version:
-        description: FetchJet version these builds are for (release tag fetchjet-<app_version>, never overwritten)
+      build:
+        description: Build number of this mpv version (release tag libmpv-<version>-<build>, never overwritten)
         required: true
+        default: "1"
         type: string
       version:
         description: mpv version
         type: string
         default: 0.42.0
       publish:
-        description: Upload the gz to the release fetchjet-<app_version>
+        description: Upload the gz to the release libmpv-<version>-<build>
         type: boolean
         default: false
 
@@ -86,9 +87,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="fetchjet-${{ inputs.app_version }}"
+          tag="libmpv-$FJ_MPV_VERSION-${{ inputs.build }}"
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest=false \
-              --title "libmpv $FJ_MPV_VERSION for FetchJet ${{ inputs.app_version }}" --notes "LGPL builds of libmpv $FJ_MPV_VERSION for FetchJet's media player."
+              --title "libmpv $FJ_MPV_VERSION build ${{ inputs.build }}" --notes "LGPL builds of libmpv $FJ_MPV_VERSION for FetchJet's media player."
           fi
           gh release upload "$tag" "${{ steps.result.outputs.gz }}" --repo "$GITHUB_REPOSITORY"

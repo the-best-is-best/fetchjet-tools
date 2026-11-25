@@ -1,7 +1,7 @@
 # libmpv for Linux x86_64
 
 One self-contained `libmpv.so.2` for the FetchJet native desktop player, published as `libmpv-linux-x64-<version>.gz`
-in the release `fetchjet-<app version>`. The app downloads it on first use into `<app home>/tools/libmpv.so.2`.
+in the release `libmpv-<version>-<build>`. The app downloads it on first use into `<app home>/tools/libmpv.so.2`.
 
 ## What is inside
 
