@@ -1,0 +1,11 @@
+ffmpeg-android for FetchJet
+
+libffmpeg.so and libffprobe.so are the ffmpeg and ffprobe programs of FFmpeg 7.1.1
+(https://ffmpeg.org), built with --enable-version3: LGPL version 3 or later.
+They contain:
+- LAME 3.100 (LGPL 2.0 or later), https://lame.sourceforge.io
+- Opus 1.5.2 (BSD 3-clause), https://opus-codec.org
+- Mbed TLS 3.6.8 (Apache 2.0), https://github.com/Mbed-TLS/mbedtls
+- zlib from the Android NDK (zlib licence)
+
+The recipe that builds them is ffmpeg-android/build.sh in https://github.com/the-best-is-best/fetchjet-tools.

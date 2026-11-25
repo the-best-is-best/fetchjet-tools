@@ -1,0 +1,71 @@
+name: ffmpeg for Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: FFmpeg version (must match ffmpeg-android/build.sh and sources.sha256)
+        default: "7.1.1"
+        required: true
+        type: string
+      build:
+        description: Build number of this FFmpeg version (release tag ffmpeg-android-<version>-<build>, never overwritten)
+        default: "1"
+        required: true
+        type: string
+      publish:
+        description: Upload the zip to the release ffmpeg-android-<version>-<build>
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Install the NDK
+        run: |
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" > /dev/null
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          grep -q "FFMPEG=${{ inputs.version }} " ffmpeg-android/build.sh || { echo "build.sh does not build ${{ inputs.version }}"; exit 1; }
+          bash ffmpeg-android/build.sh dist
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ffmpeg-android-${{ inputs.version }}
+          path: dist/
+
+  publish:
+    needs: build
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ffmpeg-android-${{ inputs.version }}
+          path: dist
+
+      - name: Publish
+        run: |
+          tag="ffmpeg-android-${{ inputs.version }}-${{ inputs.build }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" --title "ffmpeg for Android ${{ inputs.version }} build ${{ inputs.build }}" --latest=false \
+              --notes "FFmpeg ${{ inputs.version }} (LGPL 3) with LAME, Opus and Mbed TLS, built for FetchJet's Android app. The app pins the sha256 of the zip."
+          fi
+          gh release upload "$tag" dist/ffmpeg-android-*.zip dist/ffmpeg-android-*.zip.sha256 dist/LICENSE.ffmpeg-android.txt
+          echo "Put this in FetchJet tools-pins/ffmpeg-android.txt:"
+          echo "tag=$tag"
+          echo "sha256=$(cut -d' ' -f1 dist/ffmpeg-android-*.zip.sha256)"

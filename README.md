@@ -9,6 +9,7 @@ FetchJet does not need this repository to build. The app downloads the finished 
 | `libmpv/windows` | `libmpv-2.dll` (Windows x64) | the native desktop media player |
 | `libmpv/macos` | `libmpv.2.dylib` (macOS arm64) | the native desktop media player |
 | `libmpv/linux` | `libmpv.so.2` (Linux x64) | the native desktop media player |
+| `ffmpeg-android` | `libffmpeg.so` / `libffprobe.so` (Android, 4 ABIs) | the Android app (put in the APK at build time, not downloaded by the phone) |
 
 ## Releases
 

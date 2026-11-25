@@ -1,0 +1,28 @@
+#!/bin/sh
+P=${FFPREFIX}
+mode=""
+pkg=""
+for a in "$@"; do
+  case "$a" in
+    --libs) mode=libs;; --cflags) mode=cflags;; --modversion) mode=ver;;
+    --exists|--print-errors|--static|--short-errors) ;;
+    -*) ;;
+    *) pkg="$pkg $a";;
+  esac
+done
+case "$pkg" in
+  *mbedtls*)
+    case "$mode" in
+      libs) echo "-L$P/lib -lmbedtls -lmbedx509 -lmbedcrypto";;
+      cflags) echo "-I$P/include";;
+      ver) echo "3.6.8";;
+    esac;;
+  *opus*)
+    case "$mode" in
+      libs) echo "-L$P/lib -lopus -lm";;
+      cflags) echo "-I$P/include/opus";;
+      ver) echo "1.5.2";;
+    esac;;
+  *) exit 1;;
+esac
+exit 0
