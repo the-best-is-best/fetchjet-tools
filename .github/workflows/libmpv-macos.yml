@@ -1,0 +1,110 @@
+name: libmpv macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: mpv version to build (release tag libmpv-<version>)
+        required: true
+        default: 0.42.0
+      publish:
+        description: Upload libmpv-macos-arm64-<version>.gz to the release libmpv-<version>
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: libmpv-macos-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 90
+    env:
+      FJ_MPV_WORK: ${{ github.workspace }}/work
+      FJ_MPV_VERSION: ${{ inputs.version }}
+      ASSET: libmpv-macos-arm64-${{ inputs.version }}.gz
+    steps:
+      - name: Check out
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Check the version
+        run: |
+          if ! [[ "$FJ_MPV_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::version must look like 0.42.0"
+            exit 1
+          fi
+
+      - name: Build tools
+        run: |
+          command -v pkg-config >/dev/null || brew install pkgconf
+          pkg-config --version
+          xcrun clang --version | head -1
+
+      - name: Cache sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: work/dl
+          key: libmpv-macos-dl-${{ inputs.version }}-${{ hashFiles('libmpv/macos/env.sh', 'libmpv/macos/fetch-sources.sh') }}
+
+      - name: Cache dependency builds
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: work/out
+          key: libmpv-macos-deps-${{ hashFiles('libmpv/macos/env.sh', 'libmpv/macos/fetch-sources.sh', 'libmpv/macos/build-deps.sh', 'libmpv/macos/build-ffmpeg.sh') }}
+
+      - name: Build
+        run: libmpv/macos/build-all.sh
+
+      - name: Check the library
+        run: |
+          lib="$FJ_MPV_WORK/dist/libmpv.2.dylib"
+          otool -L "$lib"
+          foreign=$(otool -L "$lib" | tail -n +2 | awk '{print $1}' | grep -v -e '^@rpath/libmpv.2.dylib$' -e '^/usr/lib/' -e '^/System/Library/' || true)
+          if [ -n "$foreign" ]; then
+            echo "::error::libmpv links libraries outside macOS: $foreign"
+            exit 1
+          fi
+          if otool -l "$lib" | grep -q "__objc_classlist"; then
+            echo "::error::libmpv contains Objective-C and could not be unloaded"
+            exit 1
+          fi
+          [ "$(lipo -archs "$lib")" = "arm64" ]
+          otool -l "$lib" | grep -A4 LC_BUILD_VERSION | grep minos
+
+      - name: Summary
+        run: |
+          gz="$FJ_MPV_WORK/dist/$ASSET"
+          sha=$(shasum -a 256 "$gz" | awk '{print $1}')
+          {
+            echo "### libmpv $FJ_MPV_VERSION for macOS arm64"
+            echo ""
+            echo "| File | Size (bytes) | sha256 |"
+            echo "|---|---|---|"
+            echo "| \`$ASSET\` | $(stat -f %z "$gz") | \`$sha\` |"
+            echo "| \`libmpv.2.dylib\` | $(stat -f %z "$FJ_MPV_WORK/dist/libmpv.2.dylib") | |"
+            echo ""
+            echo "Put the sha256 in FetchJet's \`PlayerLibraryPin.MACOS_ARM64_SHA256\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the file
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: libmpv-macos-arm64-${{ inputs.version }}
+          path: work/dist/${{ env.ASSET }}
+          if-no-files-found: error
+
+      - name: Publish
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="libmpv-$FJ_MPV_VERSION"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --title "libmpv $FJ_MPV_VERSION" --latest=false \
+              --notes "Self-contained LGPL builds of libmpv $FJ_MPV_VERSION for FetchJet's desktop media player."
+          fi
+          gh release upload "$tag" "$FJ_MPV_WORK/dist/$ASSET" --clobber

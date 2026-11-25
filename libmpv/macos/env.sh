@@ -3,6 +3,7 @@
 # Needs: Xcode command line tools, meson + ninja (e.g. a python venv in $FJ_MPV_WORK/venv), pkgconf.
 : "${FJ_MPV_WORK:?set FJ_MPV_WORK to a work folder}"
 export FJ_MPV_WORK
+export FJ_MPV_VERSION="${FJ_MPV_VERSION:-0.42.0}"
 export FJ_MPV_SRC="$FJ_MPV_WORK/src"
 export FJ_MPV_BUILD="$FJ_MPV_WORK/build"
 export FJ_MPV_PREFIX="$FJ_MPV_WORK/out"

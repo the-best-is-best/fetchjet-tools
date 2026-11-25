@@ -11,7 +11,7 @@ get() {
 }
 get https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz ffmpeg-7.1.1.tar.xz
 get https://downloads.videolan.org/pub/videolan/dav1d/1.5.1/dav1d-1.5.1.tar.xz dav1d-1.5.1.tar.xz
-get https://github.com/mpv-player/mpv/archive/refs/tags/v0.42.0.tar.gz mpv-0.42.0.tar.gz
+get "https://github.com/mpv-player/mpv/archive/refs/tags/v$FJ_MPV_VERSION.tar.gz" "mpv-$FJ_MPV_VERSION.tar.gz"
 get https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz libass-0.17.5.tar.xz
 get https://github.com/fribidi/fribidi/releases/download/v1.0.18/fribidi-1.0.18.tar.xz fribidi-1.0.18.tar.xz
 get https://github.com/harfbuzz/harfbuzz/releases/download/15.2.0/harfbuzz-15.2.0.tar.xz harfbuzz-15.2.0.tar.xz
