@@ -43,3 +43,13 @@ HRESULT (WINAPI *__imp_PathCchRemoveFileSpec)(PWSTR, SIZE_T) = PathCchRemoveFile
 BOOL (WINAPI *__imp_WaitOnAddress)(volatile VOID *, PVOID, SIZE_T, DWORD) = WaitOnAddress;
 VOID (WINAPI *__imp_WakeByAddressAll)(PVOID) = WakeByAddressAll;
 VOID (WINAPI *__imp_WakeByAddressSingle)(PVOID) = WakeByAddressSingle;
+
+HRESULT WINAPI PathAllocCanonicalize(PCWSTR path, ULONG flags, PWSTR *out)
+{
+    (void)path;
+    (void)flags;
+    if (out) *out = NULL;
+    return E_NOTIMPL;
+}
+
+HRESULT (WINAPI *__imp_PathAllocCanonicalize)(PCWSTR, ULONG, PWSTR *) = PathAllocCanonicalize;

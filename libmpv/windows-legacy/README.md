@@ -8,6 +8,7 @@ The normal `libmpv-2.dll` does not load on Windows 7 because it imports two Wind
 |---|---|---|
 | `WaitOnAddress`, `WakeByAddressAll`, `WakeByAddressSingle` (`api-ms-win-core-synch-l1-2-0`) | libdovi (Rust, linked through libplacebo): the Rust standard library's locks | one SRW lock + condition variable (Vista and later); spurious wake-ups are allowed by the API |
 | `PathCchRemoveFileSpec` (`api-ms-win-core-path-l1-1-0`) | mpv's `osdep/w32_register.c` (`mpv --register`, never called through libmpv) | `PathRemoveFileSpecW` (shlwapi) |
+| `PathAllocCanonicalize` (`api-ms-win-core-path-l1-1-0`) | mpv's `misc/path_utils.c` (`mp_normalize_path`) | returns `E_NOTIMPL`, so mpv keeps the `GetFullPathNameW` result it already has |
 
 Objects on the link line win over import libraries, so the DLL defines these functions itself and imports neither set. `build-mpv.sh` fails when the DLL still imports a known Windows 8+ function or DLL set.
 
