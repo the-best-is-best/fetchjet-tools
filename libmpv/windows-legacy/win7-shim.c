@@ -33,10 +33,13 @@ VOID WINAPI WakeByAddressSingle(PVOID address)
     WakeByAddressAll(address);
 }
 
-static HRESULT WINAPI fj_PathCchRemoveFileSpec(PWSTR path, SIZE_T size)
+HRESULT WINAPI PathCchRemoveFileSpec(PWSTR path, SIZE_T size)
 {
     if (!path || size == 0) return E_INVALIDARG;
     return PathRemoveFileSpecW(path) ? S_OK : S_FALSE;
 }
 
-HRESULT (WINAPI *__imp_PathCchRemoveFileSpec)(PWSTR, SIZE_T) = fj_PathCchRemoveFileSpec;
+HRESULT (WINAPI *__imp_PathCchRemoveFileSpec)(PWSTR, SIZE_T) = PathCchRemoveFileSpec;
+BOOL (WINAPI *__imp_WaitOnAddress)(volatile VOID *, PVOID, SIZE_T, DWORD) = WaitOnAddress;
+VOID (WINAPI *__imp_WakeByAddressAll)(PVOID) = WakeByAddressAll;
+VOID (WINAPI *__imp_WakeByAddressSingle)(PVOID) = WakeByAddressSingle;
