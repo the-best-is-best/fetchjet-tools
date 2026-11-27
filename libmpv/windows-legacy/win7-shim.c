@@ -53,3 +53,26 @@ HRESULT WINAPI PathAllocCanonicalize(PCWSTR path, ULONG flags, PWSTR *out)
 }
 
 HRESULT (WINAPI *__imp_PathAllocCanonicalize)(PCWSTR, ULONG, PWSTR *) = PathAllocCanonicalize;
+
+HRESULT WINAPI PathAllocCombine(PCWSTR first, PCWSTR more, ULONG flags, PWSTR *out)
+{
+    (void)flags;
+    if (!out) return E_INVALIDARG;
+    *out = NULL;
+    if (!first && !more) return E_INVALIDARG;
+    size_t a = first ? wcslen(first) : 0;
+    size_t b = more ? wcslen(more) : 0;
+    BOOL absolute = b > 0 && (more[0] == L'\\' || more[0] == L'/' || (b > 1 && more[1] == L':'));
+    if (absolute || a == 0) a = 0;
+    BOOL slash = a > 0 && b > 0 && first[a - 1] != L'\\' && first[a - 1] != L'/';
+    PWSTR result = (PWSTR)LocalAlloc(LMEM_FIXED, (a + b + 2) * sizeof(WCHAR));
+    if (!result) return E_OUTOFMEMORY;
+    if (a) memcpy(result, first, a * sizeof(WCHAR));
+    if (slash) result[a++] = L'\\';
+    if (b) memcpy(result + a, more, b * sizeof(WCHAR));
+    result[a + b] = 0;
+    *out = result;
+    return S_OK;
+}
+
+HRESULT (WINAPI *__imp_PathAllocCombine)(PCWSTR, PCWSTR, ULONG, PWSTR *) = PathAllocCombine;
