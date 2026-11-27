@@ -12,7 +12,7 @@ clang -Os -c "$legacy/win7-shim.c" -o "$shim"
 meson setup "$FJ_MPV_BUILD/mpv-win7/build" "$FJ_MPV_SRC/mpv-$FJ_MPV_VERSION" \
     --buildtype=release -Db_ndebug=true -Dstrip=true -Dauto_features=disabled -Dgpl=false \
     -Dlibmpv=true -Dcplayer=false -Dtests=false -Dwasapi=enabled -Dgl=disabled -Dwin32-threads=enabled \
-    -Dc_args="-Os -ffunction-sections -fdata-sections" -Dc_link_args="-Wl,--gc-sections $(cygpath -m "$shim")" \
+    -Dc_args="-Os -ffunction-sections -fdata-sections" -Dc_link_args="-Wl,--gc-sections $(cygpath -m "$shim") -lshlwapi" \
     -Dprefer_static=true --default-library=shared --wrap-mode=nodownload \
     --prefix="$(cygpath -m "$FJ_MPV_OUT/mpv-win7")"
 ninja -C "$FJ_MPV_BUILD/mpv-win7/build" -j "$FJ_JOBS"
