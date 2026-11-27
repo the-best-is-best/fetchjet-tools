@@ -27,6 +27,7 @@ gzip -9n -c "$dll" > "$gz"
 imports="$(llvm-objdump -p "$dll")"
 if echo "$imports" | grep "DLL Name:" | grep -viE "(kernel32|user32|gdi32|advapi32|shell32|ole32|oleaut32|ws2_32|winmm|shlwapi|bcrypt|ntdll|userenv|version|dbghelp|rpcrt4|usp10|dwrite|uuid|avrt|api-ms-win-crt-.*|api-ms-win-core-synch-l1-1-0|api-ms-win-core-file-l1-1-0)\.dll"; then
     echo "libmpv-2.dll (Windows 7) needs a DLL that Windows 7 does not have (listed above)" >&2
+    echo "$imports" | sed -n '/DLL Name: api-ms-win-core/,/^$/p' >&2
     exit 1
 fi
 if echo "$imports" | grep -E "WaitOnAddress|WakeByAddress|PathCch|GetSystemTimePreciseAsFileTime|CreateFile2|SetThreadDescription|GetCurrentPackage"; then
