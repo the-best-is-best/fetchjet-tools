@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage, in an MSYS2 CLANG64 shell: FJ_MPV_WORK=<work folder> ./build-all.sh   (result in $FJ_MPV_WORK/dist/win7)
+# Usage, in an MSYS2 CLANG64 shell: FJ_MPV_WORK=<work folder> ./build-all.sh   (result in $FJ_MPV_WORK/dist/legacy)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 for step in "$here/../windows/fetch-sources.sh" "$here/../windows/build-ffmpeg.sh" "$here/build-mpv.sh"; do
