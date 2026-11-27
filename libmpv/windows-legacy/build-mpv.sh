@@ -12,7 +12,7 @@ clang -Os -c "$legacy/legacy-shim.c" -o "$shim"
 meson setup "$FJ_MPV_BUILD/mpv-legacy/build" "$FJ_MPV_SRC/mpv-$FJ_MPV_VERSION" \
     --buildtype=release -Db_ndebug=true -Dstrip=true -Dauto_features=disabled -Dgpl=false \
     -Dlibmpv=true -Dcplayer=false -Dtests=false -Dwasapi=enabled -Dgl=disabled -Dwin32-threads=enabled \
-    -Dc_args="-Os -ffunction-sections -fdata-sections" -Dc_link_args="-Wl,--gc-sections $(cygpath -m "$shim") -lshlwapi" \
+    -Dc_args="-Os -ffunction-sections -fdata-sections" -Dc_link_args="-Wl,--gc-sections $(cygpath -m "$shim") -lusp10 -lshlwapi" \
     -Dprefer_static=true --default-library=shared --wrap-mode=nodownload \
     --prefix="$(cygpath -m "$FJ_MPV_OUT/mpv-legacy")"
 ninja -C "$FJ_MPV_BUILD/mpv-legacy/build" -j "$FJ_JOBS"
@@ -30,7 +30,11 @@ if echo "$imports" | grep "DLL Name:" | grep -viE "(kernel32|user32|gdi32|advapi
     echo "$imports" | sed -n '/DLL Name: api-ms-win-core/,/^$/p' >&2
     exit 1
 fi
-if echo "$imports" | grep -E "WaitOnAddress|WakeByAddress|PathCch|GetSystemTimePreciseAsFileTime|CreateFile2|SetThreadDescription|GetCurrentPackage"; then
+if echo "$imports" | sed -n '/DLL Name: GDI32.dll/,/^$/p' | grep -E "Script[A-Z]"; then
+    echo "libmpv-2.dll (legacy) takes Uniscribe from GDI32.dll, which has it only since Windows 8 (listed above)" >&2
+    exit 1
+fi
+if echo "$imports" | grep -E "WaitOnAddress|WakeByAddress|PathCch|PathAlloc|MTAUsage|GetSystemTimePreciseAsFileTime|CreateFile2|SetThreadDescription|GetCurrentPackage"; then
     echo "libmpv-2.dll (legacy) imports a function Windows 7 does not have (listed above)" >&2
     exit 1
 fi

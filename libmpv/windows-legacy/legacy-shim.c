@@ -1,7 +1,72 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <objbase.h>
 #include <shlwapi.h>
 #include <string.h>
+
+struct fj_mta {
+    HANDLE ready;
+    HANDLE done;
+    HANDLE thread;
+    HRESULT result;
+};
+
+static DWORD WINAPI fj_mta_thread(LPVOID param)
+{
+    struct fj_mta *mta = (struct fj_mta *)param;
+    mta->result = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    SetEvent(mta->ready);
+    if (SUCCEEDED(mta->result)) {
+        WaitForSingleObject(mta->done, INFINITE);
+        CoUninitialize();
+    }
+    return 0;
+}
+
+HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie)
+{
+    if (!cookie) return E_INVALIDARG;
+    *cookie = NULL;
+    struct fj_mta *mta = (struct fj_mta *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *mta);
+    if (!mta) return E_OUTOFMEMORY;
+    mta->ready = CreateEventW(NULL, TRUE, FALSE, NULL);
+    mta->done = CreateEventW(NULL, TRUE, FALSE, NULL);
+    mta->thread = mta->ready && mta->done ? CreateThread(NULL, 0, fj_mta_thread, mta, 0, NULL) : NULL;
+    if (!mta->thread) {
+        if (mta->ready) CloseHandle(mta->ready);
+        if (mta->done) CloseHandle(mta->done);
+        HeapFree(GetProcessHeap(), 0, mta);
+        return E_OUTOFMEMORY;
+    }
+    WaitForSingleObject(mta->ready, INFINITE);
+    HRESULT result = mta->result;
+    if (FAILED(result)) {
+        WaitForSingleObject(mta->thread, INFINITE);
+        CloseHandle(mta->thread);
+        CloseHandle(mta->ready);
+        CloseHandle(mta->done);
+        HeapFree(GetProcessHeap(), 0, mta);
+        return result;
+    }
+    *cookie = (CO_MTA_USAGE_COOKIE)mta;
+    return S_OK;
+}
+
+HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
+{
+    struct fj_mta *mta = (struct fj_mta *)cookie;
+    if (!mta) return E_INVALIDARG;
+    SetEvent(mta->done);
+    WaitForSingleObject(mta->thread, INFINITE);
+    CloseHandle(mta->thread);
+    CloseHandle(mta->ready);
+    CloseHandle(mta->done);
+    HeapFree(GetProcessHeap(), 0, mta);
+    return S_OK;
+}
+
+HRESULT (WINAPI *__imp_CoIncrementMTAUsage)(CO_MTA_USAGE_COOKIE *) = CoIncrementMTAUsage;
+HRESULT (WINAPI *__imp_CoDecrementMTAUsage)(CO_MTA_USAGE_COOKIE) = CoDecrementMTAUsage;
 
 static SRWLOCK fj_lock = SRWLOCK_INIT;
 static CONDITION_VARIABLE fj_cond = CONDITION_VARIABLE_INIT;

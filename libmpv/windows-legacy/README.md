@@ -2,7 +2,7 @@
 
 The player library of FetchJet's Windows 7 / 8 / 8.1 edition. Same mpv, FFmpeg and MSYS2 libraries as `../windows` (it uses that folder's `env.sh`, `fetch-sources.sh`, `build-ffmpeg.sh`, `packages.txt` and `pc/`), with one difference: `legacy-shim.c` is linked in.
 
-The normal `libmpv-2.dll` does not load on Windows 7 because it imports two Windows 8 function sets:
+The normal `libmpv-2.dll` does not load on Windows 7 because it imports functions that came with Windows 8:
 
 | Import | Comes from | Shim |
 |---|---|---|
@@ -10,6 +10,8 @@ The normal `libmpv-2.dll` does not load on Windows 7 because it imports two Wind
 | `PathCchRemoveFileSpec` (`api-ms-win-core-path-l1-1-0`) | mpv's `osdep/w32_register.c` (`mpv --register`, never called through libmpv) | `PathRemoveFileSpecW` (shlwapi) |
 | `PathAllocCanonicalize` (`api-ms-win-core-path-l1-1-0`) | mpv's `misc/path_utils.c` (`mp_normalize_path`) | returns `E_NOTIMPL`, so mpv keeps the `GetFullPathNameW` result it already has |
 | `PathAllocCombine` (`api-ms-win-core-path-l1-1-0`) | one of the MSYS2 libraries | joins the two paths into a `LocalAlloc` buffer (absolute second part wins) |
+| `CoIncrementMTAUsage`, `CoDecrementMTAUsage` (ole32, Windows 8+) | mpv's `audio/out/ao_wasapi.c` (audio device hotplug) | a helper thread joins the MTA and stays until the matching decrement |
+| `ScriptItemize`, `ScriptShape`, `ScriptPlace`, `ScriptFreeCache` | harfbuzz (Uniscribe) | not a shim: `-lusp10` comes first on the link line, because MinGW maps them to GDI32.dll, which forwards them only since Windows 8 |
 
 Objects on the link line win over import libraries, so the DLL defines these functions itself and imports neither set. `build-mpv.sh` fails when the DLL still imports a known Windows 8+ function or DLL set.
 
